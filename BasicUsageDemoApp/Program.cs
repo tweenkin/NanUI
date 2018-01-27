@@ -40,8 +40,17 @@ namespace BasicUsageDemoApp
                 System.IO.Path.Combine(Application.StartupPath, "fx\\Resources"), 
                 System.IO.Path.Combine(Application.StartupPath, "fx\\Resources\\locales")))
             {
-                // Load embedded html/css resources in assembly.
-                Bootstrap.RegisterAssemblyResources(System.Reflection.Assembly.GetExecutingAssembly());
+                //注册嵌入资源，并为指定资源指定一个假的域名my.resource.local
+                //Register html/css/javascript/image resources in current executing assembly. 
+                //If you want to embed any kind of resource in your app, just add it to your project and set the Build Action to Embedded Resource.
+                Bootstrap.RegisterAssemblyResources(System.Reflection.Assembly.GetExecutingAssembly(), "my.resource.local");
+
+                //加载分离式的资源
+                //Also, you can load embedded resources from other assemblies.
+                var anotherAssembly = System.Reflection.Assembly.LoadFile(System.IO.Path.Combine(Application.StartupPath, "EmbeddedResourcesInSplitAssembly.dll"));
+                //注册外部的嵌入资源，并为指定资源指定一个假的域名separate.resource.local
+                Bootstrap.RegisterAssemblyResources(anotherAssembly, "separate.resource.local");
+
                 Application.Run(new Form2());//Html5testForm
             }
 

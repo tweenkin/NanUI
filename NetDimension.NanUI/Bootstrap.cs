@@ -194,7 +194,8 @@ namespace NetDimension.NanUI
         }
 
 
-        public static void RegisterAssemblyResources(System.Reflection.Assembly assembly, string domainName = "res.app.local")
+        public static void RegisterAssemblyResources(System.Reflection.Assembly assembly, 
+            string domainName = "res.app.local")
         {
             var factory = new CfxSchemeHandlerFactory();
             var gchandle = GCHandle.Alloc(factory);

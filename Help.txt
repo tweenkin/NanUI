@@ -1,0 +1,58 @@
+1、运行项目后窗体中没有内容（白屏）
+出现这种情况极有可能是因为您使用了VS2015或者更低版本的Visual Studio，如果是，那么您需要在项目属性中的调试选项卡里禁用启用 Visual Studio 承载进程选项。
+
+2、网页中所有带title属性的html标记都不现实工具提示
+如果出现这个问题，那么您需要在您的项目中添加一个应用程序清单文件:app.manifest：
+
+并且取消启用 Windows 公共控件和对话框的主题(Windows XP 和更高版本) 段中的注释：
+<!-- 启用 Windows 公共控件和对话框的主题(Windows XP 和更高版本) -->
+ <dependency>
+   <dependentAssembly>
+     <assemblyIdentity
+         type="win32"
+         name="Microsoft.Windows.Common-Controls"
+         version="6.0.0.0"
+         processorArchitecture="*"
+         publicKeyToken="6595b64144ccf1df"
+         language="*"
+       />
+   </dependentAssembly>
+ </dependency>
+然后在项目属性的应用程序选项卡中找到清单项目，并指定其中内容为刚才的app.manifest，重新运行项目，这时网页中的所有带title属性的标签就能正常显示工具提示了。
+
+3、注册嵌入资源的程序集
+要让NanUI加载嵌入的资源，需要在项目的Bootstrap执行Load方法成功后注册程序集中的嵌入资源，如下面代码所示，在Load成功后使用Bootstrap静态类的RegisterAssemblyResources将当前程序集中的资源注册到环境中。
+           //指定CEF架构和文件目录结构，并初始化CEF
+            if (Bootstrap.Load(PlatformArch.Auto, System.IO.Path.Combine(Application.StartupPath, "fx"), System.IO.Path.Combine(Application.StartupPath, "fx\\Resources"), System.IO.Path.Combine(Application.StartupPath, "fx\\Resources\\locales")))
+            {
+                //注册嵌入资源，并为指定资源指定一个假的域名my.resource.local
+                Bootstrap.RegisterAssemblyResources(System.Reflection.Assembly.GetExecutingAssembly(), "my.resource.local");
+
+                Application.Run(new Form1());
+            }
+RegisterAssemblyResources方法的第一个参数是需要执行注册的程序集实例，第二个参数指定一个虚假的域名，嵌入的资源将通过该域名进行访问。
+
+除了将html/css/js文件打包到当前项目，还可以将这些资源打包到单独的dll中，然后用反射的方式来获取该资源dll的程序集并使用上述方法进行注册。例如，将另一个index.html文件打包到EmbeddedResourcesInSplitAssembly.dll程序集中，内容可以与上面的本地项目中的index.html有所差别，然后主项目在CEF初始化成功之后通过下面的方法，也可以将外部程序集中的资源加载到NanUI环境中的：
+
+//指定CEF架构和文件目录结构，并初始化CEF
+            if (Bootstrap.Load(PlatformArch.Auto, System.IO.Path.Combine(Application.StartupPath, "fx"), System.IO.Path.Combine(Application.StartupPath, "fx\\Resources"), System.IO.Path.Combine(Application.StartupPath, "fx\\Resources\\locales")))
+            {
+                //注册嵌入资源，并为指定资源指定一个假的域名my.resource.local
+                Bootstrap.RegisterAssemblyResources(System.Reflection.Assembly.GetExecutingAssembly(), "my.resource.local");
+                //加载分离式的资源
+                var separateAssembly = System.Reflection.Assembly.LoadFile(System.IO.Path.Combine(Application.StartupPath, "EmbeddedResourcesInSplitAssembly.dll"));
+                //注册外部的嵌入资源，并为指定资源指定一个假的域名separate.resource.local
+                Bootstrap.RegisterAssemblyResources(separateAssembly , "separate.resource.local");
+
+                Application.Run(new Form1());
+            }
+
+您可以在项目中注册多个程序中的嵌入式资源，只需指定不同的域名(domin参数)即可。
+第四步 在Formium窗体中使用嵌入的资源
+按照上述方法，我们就完成了资源文件的嵌入。那么如何这些嵌入的资源文件呢？其实就跟平常加载网页上的资源是一样的，只需要按照我们指定的虚假域名和资源嵌入的路径组合以后，就可以在NanUI中使用嵌入的资源了。
+
+例如，按照上面步骤中的方式对文件进行嵌入后，我们就可以通过
+http://my.resource.local/index.html访问到主项目中的index.html文件，然后通过
+http://separate.resource.local/index.html访问到外部程序集EmbeddedResourcesInSplitAssembly.dll中的index.html文件了。
+
+那么，如何测试我们的资源是否这确被嵌入到程序集，并且也正常加载了呢？最简单的例子就是在我们的窗体中直接使用这些地址。
