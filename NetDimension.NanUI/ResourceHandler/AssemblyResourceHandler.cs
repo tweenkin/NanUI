@@ -102,26 +102,24 @@ namespace NetDimension.NanUI.ResourceHandler
 
 			
 
-			
-
 			var resourceNames = mainAssembly.GetManifestResourceNames().Select(x => new { TargetAssembly = mainAssembly, Name = x, IsSatellite = false });
 
 			if (satelliteAssembly != null)
 			{
-				string HandleCultureName(string name)
-				{
-					var cultureName = System.Threading.Thread.CurrentThread.CurrentCulture.Name;
-					var fileInfo = new System.IO.FileInfo(name);
+				//string HandleCultureName(string name)
+				//{
+				//	var cultureName = System.Threading.Thread.CurrentThread.CurrentCulture.Name;
+				//	var fileInfo = new System.IO.FileInfo(name);
 
-					return $"{System.IO.Path.GetFileNameWithoutExtension(fileInfo.Name)}.{cultureName}{fileInfo.Extension}";
-				}
+				//	return $"{System.IO.Path.GetFileNameWithoutExtension(fileInfo.Name)}.{cultureName}{fileInfo.Extension}";
+				//}
 
 				resourceNames = resourceNames.Union(satelliteAssembly.GetManifestResourceNames().Select(x => new { TargetAssembly = satelliteAssembly, Name = HandleCultureName(x), IsSatellite = true }));
 			}
 
 			var resource = resourceNames.SingleOrDefault(p => p.Name.Equals(resourcePath, StringComparison.CurrentCultureIgnoreCase));
 			var manifestResourceName = resourcePath;
-			if (resource.IsSatellite)
+			if (resource!=null && resource.IsSatellite)
 			{
 				var fileInfo = new System.IO.FileInfo(manifestResourceName);
 				manifestResourceName = $"{System.IO.Path.GetFileNameWithoutExtension(System.IO.Path.GetFileNameWithoutExtension(fileInfo.Name))}{fileInfo.Extension}";
@@ -154,11 +152,17 @@ namespace NetDimension.NanUI.ResourceHandler
 				callback.Continue();
 				e.SetReturnValue(false);
 			}
-
-
-
 		}
-		private void OnReadResponse(object sender, Chromium.Event.CfxReadResponseEventArgs e)
+
+        string HandleCultureName(string name)
+        {
+            var cultureName = System.Threading.Thread.CurrentThread.CurrentCulture.Name;
+            var fileInfo = new System.IO.FileInfo(name);
+
+            return $"{System.IO.Path.GetFileNameWithoutExtension(fileInfo.Name)}.{cultureName}{fileInfo.Extension}";
+        }
+
+        private void OnReadResponse(object sender, Chromium.Event.CfxReadResponseEventArgs e)
 		{
 			int bytesToCopy = webResource.data.Length - readResponseStreamOffset;
 			if (bytesToCopy > e.BytesToRead)

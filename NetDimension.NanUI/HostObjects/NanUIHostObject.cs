@@ -15,7 +15,7 @@ namespace NetDimension.NanUI.HostObjects
 
 		internal Form TopForm
 		{
-			get => hostControl is Form ? (Form)hostControl : (Form)hostControl.TopLevelControl;
+			get { return hostControl is Form ? (Form)hostControl : (Form)hostControl.TopLevelControl; }
 		}
 
 
@@ -108,7 +108,7 @@ namespace NetDimension.NanUI.HostObjects
 		[JSFunction(JSName = "close")]
 		public void Close()
 		{
-			if (!hostForm.IsDisposed)
+			if (hostForm!=null && !hostForm.IsDisposed)
 			{
 				hostForm.RequireUIThread(() =>
 				{
